@@ -1,57 +1,71 @@
 import argparse
+import os
 
 import cv2
 import numpy as np
+import svgwrite
+
+from utils import contrast, map_values
 
 
-def bands(image, n, axis=1, min_space=4, min_band=4):
-    shape_in = image.shape
+def bands(image, n, axis=1, upscale=1., min_thick=1., min_space=1.):
+    if axis == 0:
+        shapes = bands(image.T, n, axis=1, upscale=upscale, min_thick=min_thick, min_space=min_space)
+        return np.flip(shapes, axis=-1)
 
-    half_band = round(shape_in[axis] / (2 * n))
-    half_min_space = min_space // 2 + (min_space % 2 != 0) - 1
-    half_min_band = min_band // 2 + (min_band % 2 != 0) - 1
+    height_in, width_in = image.shape
+    upscale = max(upscale, 1.)
+    band_width = round(width_in * upscale / n)
 
-    if shape_in[axis] == 2 * half_band * n:
-        shape_out = shape_in
-    else:
-        shape_out = [None, None]
-        shape_out[axis] = 2 * half_band * n
-        shape_out[1 - axis] = round(shape_in[1 - axis] * shape_out[axis] / shape_in[axis])
-        shape_out = tuple(shape_out)
-        image = cv2.resize(image, (shape_out[1], shape_out[0]), interpolation=cv2.INTER_LINEAR)
+    width_out = band_width * n
+    height_out = round(height_in * width_out / width_in)
+    image = cv2.resize(image, (width_out, height_out), interpolation=cv2.INTER_LINEAR)
+    upscale = width_out / width_in
 
-    pattern = np.concatenate((
-        np.array([1. for _ in range(half_min_space)]),
-        np.linspace(1., 0., num=half_band - (half_min_band + half_min_space)),
-        np.array([0. for _ in range(2 * half_min_band)]),
-        np.linspace(0., 1., num=half_band - (half_min_band + half_min_space)),
-        np.array([1. for _ in range(half_min_space)])
-    ))
-    if axis == 1:
-        pattern = np.tile(pattern, (shape_out[0], n))
-        values = image.reshape(shape_out[0] * n, shape_out[1] // n, order='C').mean(axis=1)
-        values = values.reshape(shape_out[0], n, order='C').repeat(half_band * 2, axis=1) / 255.
-    else:
-        pattern = pattern[:, np.newaxis]
-        pattern = np.tile(pattern, (n, shape_out[1]))
-        values = image.reshape(shape_out[0] // n, shape_out[1] * n, order='F').mean(axis=0)
-        values = values.reshape(n, shape_out[1], order='F').repeat(half_band * 2, axis=0) / 255.
+    values = image.reshape(height_out * n, width_out // n).mean(axis=1)
+    values = values.reshape(height_out, n) / 255.
 
-    out = ((values > pattern) * 255.).astype('uint8')
+    shapes = np.empty((n, 2 * height_out, 2), dtype='float')
+    ys = np.arange(height_out) / upscale
+    for k in range(n):
+        shapes[k, :height_out, 0] = map_values(
+            values[:, k], 0., 1.,
+            k * band_width / upscale + min_space / 2.,
+            (k + 0.5) * band_width / upscale - min_thick / 2.,
+        )
+        shapes[k, :height_out, 1] = ys
 
-    if shape_out[0] != shape_in[0]:
-        out = cv2.resize(out, (shape_in[1], shape_in[0]), interpolation=cv2.INTER_LINEAR)
+        shapes[k, height_out:, 0] = np.flipud(map_values(
+            values[:, k], 1., 0.,
+            (k + 0.5) * band_width / upscale + min_thick / 2.,
+            (k + 1) * band_width / upscale - min_space / 2.,
+        ))
+        shapes[k, height_out:, 1] = np.flipud(ys)
 
-    return out
+    return shapes
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--file-in', type=str, required=True, help='Input image path')
-    parser.add_argument('--file-out', type=str, required=True, help='Output image path')
-    parser.add_argument('--axis', type=int, default=1, help='0 or 1 (default: 1, yields vertical bands)')
+    parser.add_argument('--file-in', type=str, required=True, help='Input image')
+    parser.add_argument('--file-out', type=str, required=True, help='Output image')
+    parser.add_argument('--n-bands', type=int, default=32, help='Number of bands to use')
+    parser.add_argument('--axis', type=int, default=1, help='0 or 1 (default: 1 for vertical bands)')
+    parser.add_argument('--min-thick', type=float, default=1., help='Minimum thickness of a shape (in px)')
+    parser.add_argument('--min-space', type=float, default=1., help='Minimum space between shapes (in px)')
     args = parser.parse_args()
 
+    if os.path.splitext(args.file_out)[-1] != '.svg':
+        args.file_out += '.svg'
+
     image_in = cv2.imread(args.file_in, 0)
-    image_out = bands(image_in, 60, axis=args.axis)
-    cv2.imwrite(args.file_out, image_out)
+    image_in = contrast(image_in)
+
+    pts_shapes = bands(image_in, n=args.n_bands, axis=args.axis,
+                       min_thick=args.min_thick, min_space=args.min_space)
+
+    dwg = svgwrite.Drawing(args.file_out, profile='basic')
+    for i, pts in enumerate(pts_shapes):
+        print("{} / {} bands".format(i, args.n_bands))
+        dwg.add(dwg.polygon(points=pts, fill=svgwrite.rgb(10, 10, 10)))
+    dwg.save(pretty=True)
