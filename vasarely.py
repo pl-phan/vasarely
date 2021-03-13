@@ -8,26 +8,26 @@ import svgwrite
 from utils import contrast, map_values
 
 
-def bands(image, n, axis=1, upscale=1., min_thick=1., min_space=1.):
+def bands(image, n_bands, axis=1, min_thick=1., min_space=1.):
     if axis == 0:
-        shapes = bands(image.T, n, axis=1, upscale=upscale, min_thick=min_thick, min_space=min_space)
+        shapes = bands(image.T, n_bands, axis=1, min_thick=min_thick, min_space=min_space)
         return np.flip(shapes, axis=-1)
 
     height_in, width_in = image.shape
-    upscale = max(upscale, 1.)
-    band_width = round(width_in * upscale / n)
+    band_width = round(width_in / n_bands)
 
-    width_out = band_width * n
+    width_out = band_width * n_bands
     height_out = round(height_in * width_out / width_in)
-    image = cv2.resize(image, (width_out, height_out), interpolation=cv2.INTER_LINEAR)
     upscale = width_out / width_in
+    print(upscale)
+    image = cv2.resize(image, (width_out, height_out), interpolation=cv2.INTER_LINEAR)
 
-    values = image.reshape(height_out * n, width_out // n).mean(axis=1)
-    values = values.reshape(height_out, n) / 255.
+    values = image.reshape(height_out * n_bands, width_out // n_bands).mean(axis=1)
+    values = values.reshape(height_out, n_bands) / 255.
 
-    shapes = np.empty((n, 2 * height_out, 2), dtype='float')
+    shapes = np.empty((n_bands, 2 * height_out, 2), dtype='float')
     ys = np.arange(height_out) / upscale
-    for k in range(n):
+    for k in range(n_bands):
         shapes[k, :height_out, 0] = map_values(
             values[:, k], 0., 1.,
             k * band_width / upscale + min_space / 2.,
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     image_in = cv2.imread(args.file_in, 0)
     image_in = contrast(image_in)
 
-    pts_shapes = bands(image_in, n=args.n_bands, axis=args.axis,
+    pts_shapes = bands(image_in, n_bands=args.n_bands, axis=args.axis,
                        min_thick=args.min_thick, min_space=args.min_space)
 
     dwg = svgwrite.Drawing(args.file_out, profile='basic')
