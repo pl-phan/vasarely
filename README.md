@@ -15,7 +15,7 @@ Example :
 
 Input (any) | Output (SVG)
 :---: | :---:
-![input](images/test_in.png) | ![output](images/test_out.svg?sanitize=true)
+![input](images/test_in.png) | ![output](images/test_out.svg)
 
 
 ```
