@@ -54,7 +54,7 @@ def map_values(x, in_min, in_max, out_min, out_max):
     return slope * x + offset
 
 
-def vasarely_bands(file_in, file_out, n_bands=32, axis=1, min_thick=1., min_space=1., border=10.):
+def vasarely_bands(file_in, file_out, n_bands=32, axis=1, min_thick=3., min_space=3., border=10.):
     """
 
     Parameters
@@ -68,9 +68,9 @@ def vasarely_bands(file_in, file_out, n_bands=32, axis=1, min_thick=1., min_spac
     axis : int, optional
         1 for vertical bands, 0 for horizontal bands (default : 1).
     min_thick : float, optional
-        Minimum thickness of a bright band (default : 1.).
+        Minimum thickness of a bright band (default : 3.).
     min_space : float, optional
-        Minimum space between bright bands (default : 1.).
+        Minimum space between bright bands (default : 3.).
     border : float, optional
         Border around the results (default : 10.).
     """
@@ -147,10 +147,10 @@ if __name__ == '__main__':
                         help='Number of shadow bands to use. (default : 32)')
     parser.add_argument('--axis', type=int, default=1,
                         help='1 for vertical bands, 0 for horizontal bands (default : 1).')
-    parser.add_argument('--min-thick', type=float, default=1.,
-                        help='Minimum thickness of a bright band, in px (default : 1.).')
-    parser.add_argument('--min-space', type=float, default=1.,
-                        help='Minimum space between bright bands, in px (default : 1.).')
+    parser.add_argument('--min-thick', type=float, default=3.,
+                        help='Minimum thickness of a bright band, in px (default : 3.).')
+    parser.add_argument('--min-space', type=float, default=3.,
+                        help='Minimum space between bright bands, in px (default : 3.).')
     parser.add_argument('--border', type=float, default=10.,
                         help='Border size order around the results, in px (default : 10.).')
     args = parser.parse_args()
