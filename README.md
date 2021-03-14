@@ -3,6 +3,7 @@
 A standalone python to reproduce the style of Victor Vasarely in this artwork:
 
 ![](images/original_vasarely.png)
+
 It is found in the entrance hall of the Centre Pompidou in Paris.  
 (Hence the portrait of Georges Pompidou)
 
