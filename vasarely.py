@@ -141,6 +141,7 @@ def vasarely_bands(file_in, file_out, n_bands=32, axis=1, min_thick=3., min_spac
     # Draw frame
     dwg.add(dwg.polygon(points=frame, stroke='#000000', fill='none'))
     dwg.save(pretty=True)
+    print('Output : {}'.format(file_out))
 
 
 if __name__ == '__main__':
