@@ -4,6 +4,8 @@ A standalone python to reproduce the style of Victor Vasarely in this artwork:
 
 ![](images/original_vasarely.png)
 
+<img src="https://raw.githubusercontent.com/pilou-K75VJ/vasarely/master/images/original_vasarely.png" width="400">
+
 It is found in the entrance hall of the Centre Pompidou in Paris.  
 (Hence the portrait of Georges Pompidou)
 
@@ -16,9 +18,10 @@ Example :
 
 Input (any) | Output (SVG)
 :---: | :---:
-![input](images/test_in.png) | ![output](images/test_out.png)
+<img src="https://raw.githubusercontent.com/pilou-K75VJ/vasarely/master/images/test_in.png" width="200">| <img src="https://raw.githubusercontent.com/pilou-K75VJ/vasarely/master/images/test_out.png" width="200">
 
 
+[comment]: <> (![input]&#40;images/test_in.png&#41; | ![output]&#40;images/test_out.png&#41;)
 ```
 usage: vasarely.py [-h] --file-in FILE_IN [--file-out FILE_OUT]
                    [--n-bands N_BANDS] [--axis AXIS] [--min-thick MIN_THICK]

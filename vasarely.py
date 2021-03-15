@@ -123,17 +123,23 @@ def vasarely_bands(file_in, file_out, n_bands=32, axis=1, min_thick=3., min_spac
     # Offset both x and y, so the whole array
     shapes += border
 
+    # Frames corners
+    frame = np.zeros((4, 2), dtype='float')
+    frame[1:3, 1] = height_in + 2. * border
+    frame[2:4, 0] = width_in + 2. * border
+
     # Transpose for horizontal bands
     if axis == 0:
         shapes = np.flip(shapes, axis=-1)
+        frame = np.flip(frame, axis=-1)
 
     dwg = svgwrite.Drawing(file_out, profile='basic')
     for i, shape in enumerate(shapes, 1):
         print("{} / {} bands".format(i, n_bands))
         # Draw i-est shadow shape
         dwg.add(dwg.polygon(points=shape, fill='#000000'))
-    # Draw border frame
-    dwg.add(dwg.rect((0., 0.), (width_in + 2. * border, height_in + 2. * border), stroke='#000000', fill='none'))
+    # Draw frame
+    dwg.add(dwg.polygon(points=frame, stroke='#000000', fill='none'))
     dwg.save(pretty=True)
 
 
