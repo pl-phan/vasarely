@@ -19,8 +19,8 @@ python vasarely.py --file-in images/test3_in.png --file-out images/test3_out.svg
 ```
 Input (any) | Output (SVG)
 :---: | :---:
-<img src="images/test1_in.png" height="200">| <img src="images/test1_out.png" height="200">
-<img src="images/test2_in.png" height="200">| <img src="images/test2_out.png" height="200">
+<img src="images/test1_in.png" width="200">| <img src="images/test1_out.png" width="200">
+<img src="images/test2_in.png" width="350">| <img src="images/test2_out.png" width="350">
 <img src="images/test3_in.png" width="200">| <img src="images/test3_out.png" width="200">
 
 
