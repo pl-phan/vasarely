@@ -14,7 +14,7 @@ The code produces SVG images.
 ## Usage
 
 Example : 
-`python vasarely.py --file-in images/test_in.png --file-out images/test_out.svg --n-bands 40`
+`python vasarely.py --file-in images/test1_in.png --file-out images/test1_out.svg --n-bands 40`
 
 Input (any) | Output (SVG)
 :---: | :---:
