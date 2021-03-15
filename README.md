@@ -13,15 +13,15 @@ The code produces SVG images.
 
 Examples :
 ```
-python vasarely.py --file-in images/test1_in.png --file-out images/test1_out.svg --n-bands 40
-python vasarely.py --file-in images/test2_in.png --file-out images/test2_out.svg --n-bands 60 --min-space 1
-python vasarely.py --file-in images/test3_in.png --file-out images/test3_out.svg --axis 0 --n-bands 50 --min-space 1
+python vasarely.py --file-in images/test1_in.png --n-bands 40
+python vasarely.py --file-in images/test2_in.png --n-bands 60 --min-space 1
+python vasarely.py --file-in images/test3_in.png --axis 0 --n-bands 50 --min-space 1
 ```
 Input (any) | Output (SVG)
 :---: | :---:
-<img src="images/test1_in.png" width="200">| <img src="images/test1_out.png" width="200">
-<img src="images/test2_in.png" width="350">| <img src="images/test2_out.png" width="350">
-<img src="images/test3_in.png" width="200">| <img src="images/test3_out.png" width="200">
+<img src="images/test1.png" width="250">| <img src="images/test1_out.png" width="250">
+<img src="images/test2.png" width="350">| <img src="images/test2_out.png" width="350">
+<img src="images/test3.png" width="200">| <img src="images/test3_out.png" width="200">
 
 
 ```
