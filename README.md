@@ -2,7 +2,7 @@
 
 A standalone python to reproduce the style of Victor Vasarely in this artwork:
 
-<img src="images/original_vasarely.png" height="240">
+<img src="http://golem13.fr/wp-content/uploads/2019/02/Vasarely-expo-CentrePoimpidou.jpg" height="250">
 
 It is found in the entrance hall of the Centre Pompidou in Paris.  
 (Hence the portrait of Georges Pompidou)
@@ -11,14 +11,17 @@ The code produces SVG images.
 
 ## Usage
 
-Example : 
-`python vasarely.py --file-in images/test1_in.png --file-out images/test1_out.svg --n-bands 40`
-`python vasarely.py --file-in images/test2_in.png --file-out images/test2_out.svg --n-bands 60 --min-space 1`
-
+Examples :
+```
+python vasarely.py --file-in images/test1_in.png --file-out images/test1_out.svg --n-bands 40
+python vasarely.py --file-in images/test2_in.png --file-out images/test2_out.svg --n-bands 60 --min-space 1
+python vasarely.py --file-in images/test3_in.png --file-out images/test3_out.svg --axis 0 --n-bands 50 --min-space 1
+```
 Input (any) | Output (SVG)
 :---: | :---:
-<img src="images/test1_in.png" height="120">| <img src="images/test1_out.png" height="120">
-<img src="images/test2_in.png" height="120">| <img src="images/test2_out.png" height="120">
+<img src="images/test1_in.png" height="200">| <img src="images/test1_out.png" height="200">
+<img src="images/test2_in.png" height="200">| <img src="images/test2_out.png" height="200">
+<img src="images/test3_in.png" width="200">| <img src="images/test3_out.png" width="200">
 
 
 ```
