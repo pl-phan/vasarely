@@ -2,7 +2,7 @@
 
 A standalone python to reproduce the style of Victor Vasarely in this artwork:
 
-<img src="images/original_vasarely.png" width="400">
+<img src="images/original_vasarely.png" height="240">
 
 It is found in the entrance hall of the Centre Pompidou in Paris.  
 (Hence the portrait of Georges Pompidou)
@@ -17,8 +17,8 @@ Example :
 
 Input (any) | Output (SVG)
 :---: | :---:
-<img src="images/test1_in.png" width="200">| <img src="images/test1_out.png" width="200">
-<img src="images/test2_in.png" width="200">| <img src="images/test2_out.png" width="200">
+<img src="images/test1_in.png" height="120">| <img src="images/test1_out.png" height="120">
+<img src="images/test2_in.png" height="120">| <img src="images/test2_out.png" height="120">
 
 
 ```
