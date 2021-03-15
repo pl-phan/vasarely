@@ -20,7 +20,7 @@ python vasarely.py --file-in images/test3_in.png --axis 0 --n-bands 50 --min-spa
 Input (any) | Output (SVG)
 :---: | :---:
 <img src="images/test1.png" width="250">| <img src="images/test1_out.png" width="250">
-<img src="images/test2.png" width="350">| <img src="images/test2_out.png" width="350">
+<img src="images/test2.png" width="380">| <img src="images/test2_out.png" width="380">
 <img src="images/test3.png" width="200">| <img src="images/test3_out.png" width="200">
 
 
