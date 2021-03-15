@@ -13,9 +13,9 @@ The code produces SVG images.
 
 Examples :
 ```
-python vasarely.py --file-in images/test1_in.png --n-bands 40
-python vasarely.py --file-in images/test2_in.png --n-bands 60 --min-space 1
-python vasarely.py --file-in images/test3_in.png --axis 0 --n-bands 50 --min-space 1
+python vasarely.py --file-in images/test1.png --n-bands 40
+python vasarely.py --file-in images/test2.png --n-bands 60 --min-space 1
+python vasarely.py --file-in images/test3.png --axis 0 --n-bands 50 --min-space 1
 ```
 Input (any) | Output (SVG)
 :---: | :---:
