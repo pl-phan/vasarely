@@ -21,13 +21,13 @@ def bands(file_in, file_out, n_bands=32, axis=1, min_thick=3., min_space=3., bor
     n_bands : int, optional
         Number of shadow bands to use. (default : 32)
     axis : int, optional
-        1 for vertical bands, 0 for horizontal bands (default : 1).
+        1 for vertical bands, 0 for horizontal bands. (default : 1)
     min_thick : float, optional
-        Minimum thickness of a bright band (default : 3.).
+        Minimum thickness of a bright band. (default : 3.)
     min_space : float, optional
-        Minimum space between bright bands (default : 3.).
+        Minimum space between bright bands. (default : 3.)
     border : float, optional
-        Border around the results (default : 10.).
+        Border size around the results, in px. (default : 10.)
     """
 
     # Input as grayscale, and map to [0, 255].
@@ -110,11 +110,11 @@ if __name__ == '__main__':
     parser.add_argument('--axis', type=int, default=1,
                         help='1 for vertical bands, 0 for horizontal bands (default : 1).')
     parser.add_argument('--min-thick', type=float, default=3.,
-                        help='Minimum thickness of a bright band, in px (default : 3.).')
+                        help='Minimum thickness of a bright band, in px. (default : 3.)')
     parser.add_argument('--min-space', type=float, default=3.,
-                        help='Minimum space between bright bands, in px (default : 3.).')
+                        help='Minimum space between bright bands, in px. (default : 3.)')
     parser.add_argument('--border', type=float, default=10.,
-                        help='Border size order around the results, in px (default : 10.).')
+                        help='Border size around the result, in px. (default : 10.)')
     args = parser.parse_args()
 
     if args.file_out is None:
