@@ -47,8 +47,7 @@ def bands(file_in, file_out, n_bands=32, axis=1, min_thick=3., min_space=3., bor
     scale_factor = width_out / width_in
 
     # Compute shadow bands widths, with means over pixel groups.
-    values = image.reshape(height_out * n_bands, width_out // n_bands).mean(axis=1)
-    values = values.reshape(height_out, n_bands)
+    values = image.reshape(height_out, n_bands, width_out // n_bands).mean(axis=2)
 
     shapes = np.empty((n_bands, 2 * height_out, 2), dtype='float')
     # Array will be filled with the coordinates for the
