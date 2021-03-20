@@ -8,8 +8,8 @@ import svgwrite
 from utils import contrast, map_values
 
 
-def squares(file_in, file_out, n_squares_horizontal=None,  n_squares_vertical=None,
-            min_thick=3., min_square_size=0., border=10.):
+def to_squares(file_in, file_out, n_squares_horizontal=None, n_squares_vertical=None,
+               min_thick=1., min_square_size=0., border=10.):
     """
     Reproduce an image with dark mosaic.
 
@@ -24,7 +24,7 @@ def squares(file_in, file_out, n_squares_horizontal=None,  n_squares_vertical=No
     n_squares_vertical : int, optional
         Number of squares to use vertically.
     min_thick : float, optional
-        Minimum thickness of the bright grid, in px. (default : 3.)
+        Minimum thickness of the bright grid, in px. (default : 1.)
     min_square_size : float, optional
         Minimum size of the squares, in px. (default : 0.)
     border : float, optional
@@ -61,23 +61,14 @@ def squares(file_in, file_out, n_squares_horizontal=None,  n_squares_vertical=No
     squares = np.empty((n_squares_vertical, n_squares_horizontal, 4), dtype='float')
     # Array will be filled with the coordinates for the (X, Y, W, H) elements of each square.
 
-    for i in range(n_squares_vertical):
-        for j in range(n_squares_horizontal):
-            # value == 0. means largest square,
-            # value == 255. means smallest square.
+    squares[:, :, 0] = ((np.arange(n_squares_horizontal) + 0.5) * square_width / scale_factor_horizontal)[np.newaxis, :]
+    squares[:, :, 1] = ((np.arange(n_squares_vertical) + 0.5) * square_height / scale_factor_vertical)[:, np.newaxis]
 
-            x = (j + 0.5) * square_width / scale_factor_horizontal
-            y = (i + 0.5) * square_height / scale_factor_vertical
+    squares[:, :, 2] = map_values(values, 0., 255., square_width / scale_factor_horizontal - min_thick, min_square_size)
+    squares[:, :, 3] = map_values(values, 0., 255., square_height / scale_factor_vertical - min_thick, min_square_size)
 
-            w = map_values(values[i, j], 0., 255., square_width / scale_factor_horizontal - min_thick, min_square_size)
-            h = map_values(values[i, j], 0., 255., square_height / scale_factor_vertical - min_thick, min_square_size)
-
-            squares[i, j] = (
-                x - w / 2.,
-                y - h / 2.,
-                w,
-                h
-            )
+    squares[:, :, 0] -= squares[:, :, 2] / 2.
+    squares[:, :, 1] -= squares[:, :, 3] / 2.
 
     # Offset both x and y
     squares[:, :, :2] += border
@@ -110,8 +101,8 @@ if __name__ == '__main__':
     parser.add_argument('--n-squares-v', type=int, default=None,
                         help='Number of squares to use vertically. ' +
                              '(At least one of n-squares-h and n-squares-h must be provided)')
-    parser.add_argument('--min-thick', type=float, default=3.,
-                        help='Minimum thickness of the bright grid, in px. (default : 3.)')
+    parser.add_argument('--min-thick', type=float, default=1.,
+                        help='Minimum thickness of the bright grid, in px. (default : 1.)')
     parser.add_argument('--min-square-size', type=float, default=0.,
                         help='Minimum size of the squares, in px. (default : 0.)')
     parser.add_argument('--border', type=float, default=10.,
@@ -123,6 +114,6 @@ if __name__ == '__main__':
     elif os.path.splitext(args.file_out)[-1] != '.svg':
         args.file_out += '.svg'
 
-    squares(file_in=args.file_in, file_out=args.file_out,
-            n_squares_horizontal=args.n_squares_h, n_squares_vertical=args.n_squares_v,
-            min_thick=args.min_thick, min_square_size=args.min_square_size, border=args.border)
+    to_squares(file_in=args.file_in, file_out=args.file_out,
+               n_squares_horizontal=args.n_squares_h, n_squares_vertical=args.n_squares_v,
+               min_thick=args.min_thick, min_square_size=args.min_square_size, border=args.border)

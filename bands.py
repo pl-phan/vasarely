@@ -8,7 +8,7 @@ import svgwrite
 from utils import contrast, map_values
 
 
-def bands(file_in, file_out, n_bands=32, axis=1, min_thick=3., min_space=3., border=10.):
+def to_bands(file_in, file_out, n_bands=32, axis=1, min_thick=3., min_space=3., border=10.):
     """
     Reproduce an image with dark parallel bands.
 
@@ -121,5 +121,5 @@ if __name__ == '__main__':
     elif os.path.splitext(args.file_out)[-1] != '.svg':
         args.file_out += '.svg'
 
-    bands(file_in=args.file_in, file_out=args.file_out, n_bands=args.n_bands, axis=args.axis,
-          min_thick=args.min_thick, min_space=args.min_space, border=args.border)
+    to_bands(file_in=args.file_in, file_out=args.file_out, n_bands=args.n_bands, axis=args.axis,
+             min_thick=args.min_thick, min_space=args.min_space, border=args.border)
