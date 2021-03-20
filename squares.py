@@ -8,9 +8,10 @@ import svgwrite
 from utils import contrast, map_values
 
 
-def bands(file_in, file_out, n_squares=32, min_thick=3., min_square_size=3., border=10.):
+def squares(file_in, file_out, n_squares_horizontal=None,  n_squares_vertical=None,
+            min_thick=3., min_square_size=0., border=10.):
     """
-    Reproduce an image with dark parallel bands.
+    Reproduce an image with dark mosaic.
 
     Parameters
     ----------
@@ -18,76 +19,79 @@ def bands(file_in, file_out, n_squares=32, min_thick=3., min_square_size=3., bor
         Path of the input image.
     file_out : str
         Path of the output SVG image.
-    n_squares : int, optional
-        Number of horizontal squares to use. (default : 32)
+    n_squares_horizontal : int, optional
+        Number of squares to use horizontally.
+    n_squares_vertical : int, optional
+        Number of squares to use vertically.
     min_thick : float, optional
         Minimum thickness of the bright grid, in px. (default : 3.)
     min_square_size : float, optional
-        Minimum size of the squares, in px. (default : 3.)
+        Minimum size of the squares, in px. (default : 0.)
     border : float, optional
         Border size around the result, in px. (default : 10.)
     """
 
     # Input as grayscale, and map to [0, 255].
     image = contrast(cv2.imread(file_in, 0))
-
     height_in, width_in = image.shape
 
-    # Resize to nearest multiple, for equal sized squares.
-    square_size = round(width_in / n_squares)
-    width_out = square_size * n_squares
+    if n_squares_horizontal is None and n_squares_vertical is None:
+        raise AssertionError('Either n_squares_horizontal or n_squares_vertical must be specified.')
+    if n_squares_vertical is None:
+        n_squares_vertical = round(n_squares_horizontal * height_in / width_in)
+    if n_squares_horizontal is None:
+        n_squares_horizontal = round(n_squares_vertical * width_in / height_in)
 
-    height_out = round(height_in * width_out / width_in)
+    # Resize to nearest multiple, for equally sized squares.
+    square_width = round(width_in / n_squares_horizontal)
+    width_out = square_width * n_squares_horizontal
+    square_height = round(height_in / n_squares_vertical)
+    height_out = square_height * n_squares_vertical
+
     image = cv2.resize(image, (width_out, height_out), interpolation=cv2.INTER_LINEAR)
-    scale_factor = width_out / width_in
+    scale_factor_horizontal = width_out / width_in
+    scale_factor_vertical = height_out / height_in
 
-    # Compute shadow bands widths, with means over pixel groups.
-    values = image.reshape(height_out * n_bands, width_out // n_bands).mean(axis=1)
-    values = values.reshape(height_out, n_bands)
+    # Compute square sizes, with mean over each area.
+    values = image.reshape(
+        n_squares_vertical, height_out // n_squares_vertical,
+        n_squares_horizontal, width_out // n_squares_horizontal
+    ).mean(axis=(1, 3))
 
-    shapes = np.empty((n_bands, 2 * height_out, 2), dtype='float')
-    # Array will be filled with the coordinates for the
-    # 'height_out * 2' points of each shadow shape contour.
+    squares = np.empty((n_squares_vertical, n_squares_horizontal, 4), dtype='float')
+    # Array will be filled with the coordinates for the (X, Y, W, H) elements of each square.
 
-    heights = np.arange(height_out) / scale_factor
-    for k in range(n_bands):
-        # value == 0. means largest shadow band,
-        # value == 255. means thinnest shadow band.
+    for i in range(n_squares_vertical):
+        for j in range(n_squares_horizontal):
+            # value == 0. means largest square,
+            # value == 255. means smallest square.
 
-        # Points on the left, going down.
-        shapes[k, :height_out, 0] = map_values(
-            values[:, k], 0., 255.,
-            k * band_width / scale_factor + min_thick / 2.,
-            (k + 0.5) * band_width / scale_factor - min_space / 2.,
-        )
-        shapes[k, :height_out, 1] = heights
+            x = (j + 0.5) * square_width / scale_factor_horizontal
+            y = (i + 0.5) * square_height / scale_factor_vertical
 
-        # Points on the right, going up.
-        shapes[k, height_out:, 0] = np.flipud(map_values(
-            values[:, k], 255., 0.,
-            (k + 0.5) * band_width / scale_factor + min_space / 2.,
-            (k + 1) * band_width / scale_factor - min_thick / 2.,
-        ))
-        shapes[k, height_out:, 1] = np.flipud(heights)
+            w = map_values(values[i, j], 0., 255., square_width / scale_factor_horizontal - min_thick, min_square_size)
+            h = map_values(values[i, j], 0., 255., square_height / scale_factor_vertical - min_thick, min_square_size)
 
-    # Offset both x and y, so the whole array
-    shapes += border
+            squares[i, j] = (
+                x - w / 2.,
+                y - h / 2.,
+                w,
+                h
+            )
+
+    # Offset both x and y
+    squares[:, :, :2] += border
 
     # Frames corners
     frame = np.zeros((4, 2), dtype='float')
     frame[1:3, 1] = height_in + 2. * border
     frame[2:4, 0] = width_in + 2. * border
 
-    # Transpose for horizontal bands
-    if axis == 0:
-        shapes = np.flip(shapes, axis=-1)
-        frame = np.flip(frame, axis=-1)
-
     dwg = svgwrite.Drawing(file_out, profile='basic')
-    for i, shape in enumerate(shapes, 1):
-        print("{} / {} bands".format(i, n_bands))
+    for k, square in enumerate(squares.reshape(n_squares_horizontal * n_squares_vertical, 4), 1):
+        print("{} / {} squares".format(k, n_squares_horizontal * n_squares_vertical))
         # Draw i-est shadow shape
-        dwg.add(dwg.polygon(points=shape, fill='#000000'))
+        dwg.add(dwg.rect(insert=square[:2], size=square[2:], fill='#000000'))
     # Draw frame
     dwg.add(dwg.polygon(points=frame, stroke='#000000', fill='none'))
     dwg.save(pretty=True)
@@ -100,12 +104,16 @@ if __name__ == '__main__':
                         help='Path of the input image.')
     parser.add_argument('--file-out', type=str, default=None,
                         help='Path of the output SVG image. (default : input file but it\'s SVG)')
-    parser.add_argument('--n-squares', type=int, default=32,
-                        help='Number of horizontal squares to use. (default : 32)')
+    parser.add_argument('--n-squares-h', type=int, default=None,
+                        help='Number of squares to use horizontally. ' +
+                             '(At least one of n-squares-h and n-squares-h must be provided)')
+    parser.add_argument('--n-squares-v', type=int, default=None,
+                        help='Number of squares to use vertically. ' +
+                             '(At least one of n-squares-h and n-squares-h must be provided)')
     parser.add_argument('--min-thick', type=float, default=3.,
                         help='Minimum thickness of the bright grid, in px. (default : 3.)')
-    parser.add_argument('--min-square-size', type=float, default=3.,
-                        help='Minimum size of the squares, in px. (default : 3.)')
+    parser.add_argument('--min-square-size', type=float, default=0.,
+                        help='Minimum size of the squares, in px. (default : 0.)')
     parser.add_argument('--border', type=float, default=10.,
                         help='Border size around the result, in px. (default : 10.)')
     args = parser.parse_args()
@@ -115,5 +123,6 @@ if __name__ == '__main__':
     elif os.path.splitext(args.file_out)[-1] != '.svg':
         args.file_out += '.svg'
 
-    bands(file_in=args.file_in, file_out=args.file_out, n_squares=args.n_squares,
-          min_thick=args.min_thick, min_square_size=args.min_square_size, border=args.border)
+    squares(file_in=args.file_in, file_out=args.file_out,
+            n_squares_horizontal=args.n_squares_h, n_squares_vertical=args.n_squares_v,
+            min_thick=args.min_thick, min_square_size=args.min_square_size, border=args.border)
