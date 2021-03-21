@@ -17,9 +17,9 @@ python bands.py --file-in images/test3.png --n-bands 50 --axis 0
 ```
 Input (any) | Output (SVG)
 :---: | :---:
-<img src="images/test1.png" width="250">| <img src="images/test1_out.png" width="250">
-<img src="images/test2.png" width="380">| <img src="images/test2_out.png" width="380">
-<img src="images/test3.png" width="200">| <img src="images/test3_out.png" width="200">
+<img src="images/test1.png" width="250">| <img src="images/test1_bands.png" width="250">
+<img src="images/test2.png" width="380">| <img src="images/test2_bands.png" width="380">
+<img src="images/test3.png" width="200">| <img src="images/test3_bands.png" width="200">
 
 ```
 usage: bands.py [-h] --file-in FILE_IN [--file-out FILE_OUT] [--invert]
