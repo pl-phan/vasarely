@@ -8,9 +8,9 @@ import svgwrite
 from utils import contrast, map_values
 
 
-def to_bands(file_in, file_out, n_bands=32, axis=1, min_thick=3., min_space=3., border=10.):
+def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, min_thick=3., min_space=3., border=10.):
     """
-    Reproduce an image with dark parallel bands.
+    Reproduce an image with parallel bands.
 
     Parameters
     ----------
@@ -18,6 +18,8 @@ def to_bands(file_in, file_out, n_bands=32, axis=1, min_thick=3., min_space=3., 
         Path of the input image.
     file_out : str
         Path of the output SVG image.
+    invert : bool, optional
+        Invert bright and dark values. (default : False)
     n_bands : int, optional
         Number of shadow bands to use. (default : 32)
     axis : int, optional
@@ -31,7 +33,7 @@ def to_bands(file_in, file_out, n_bands=32, axis=1, min_thick=3., min_space=3., 
     """
 
     # Input as grayscale, and map to [0, 255].
-    image = contrast(cv2.imread(file_in, 0))
+    image = contrast(cv2.imread(file_in, 0), invert=invert)
 
     # Transpose for horizontal bands.
     if axis == 0:
@@ -104,6 +106,8 @@ if __name__ == '__main__':
                         help='Path of the input image.')
     parser.add_argument('--file-out', type=str, default=None,
                         help='Path of the output SVG image. (default : input file but it\'s SVG)')
+    parser.add_argument('--invert', action='store_true',
+                        help='Invert bright and dark values. (default : False)')
     parser.add_argument('--n-bands', type=int, default=32,
                         help='Number of shadow bands to use. (default : 32)')
     parser.add_argument('--axis', type=int, default=1,
@@ -121,5 +125,6 @@ if __name__ == '__main__':
     elif os.path.splitext(args.file_out)[-1] != '.svg':
         args.file_out += '.svg'
 
-    to_bands(file_in=args.file_in, file_out=args.file_out, n_bands=args.n_bands, axis=args.axis,
+    to_bands(file_in=args.file_in, file_out=args.file_out, invert=args.invert,
+             n_bands=args.n_bands, axis=args.axis,
              min_thick=args.min_thick, min_space=args.min_space, border=args.border)

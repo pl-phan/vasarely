@@ -1,7 +1,7 @@
 from numpy import ndarray
 
 
-def contrast(image):
+def contrast(image, invert=False):
     """
     Affine mapping from [min, max] to [0, 255] for uint8 arrays.
 
@@ -9,6 +9,8 @@ def contrast(image):
     ----------
     image : ndarray
         Input array [uint8].
+    invert : bool, optional
+        Invert bright and dark values. (default : False)
 
     Returns
     -------
@@ -16,6 +18,8 @@ def contrast(image):
         Contrasted array with min=0, max=255 [uint8].
     """
     image = image.astype('float')
+    if invert:
+        image *= -1
     image -= image.min()
     image *= 255. / image.max()
     return image.round().astype('uint8')
