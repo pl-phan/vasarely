@@ -53,9 +53,9 @@ python tiles.py --file-in images/test3.png --n-tiles-h 100 --tile-type square
 ```
 Input (any) | Output (SVG)
 :---: | :---:
-<img src="images/test1.png" width="250">| <img src="images/test1_tiles.png" width="250">
-<img src="images/test2.png" width="380">| <img src="images/test2_tiles.png" width="380">
-<img src="images/test3.png" width="200">| <img src="images/test3_tiles.png" width="200">
+<img src="images/test1.png" width="250">| <a href="images/test1_tiles.svg"> <img src="images/test1_tiles.png" width="250"> <a/>
+<img src="images/test2.png" width="380">| <a href="images/test2_tiles.svg"> <img src="images/test2_tiles.png" width="380"> <a/>
+<img src="images/test3.png" width="200">| <a href="images/test3_tiles.svg"> <img src="images/test3_tiles.png" width="200"> <a/>
 
 ```
 usage: tiles.py [-h] --file-in FILE_IN [--file-out FILE_OUT] [--invert]
