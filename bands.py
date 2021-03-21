@@ -8,7 +8,7 @@ import svgwrite
 from utils import contrast, map_values
 
 
-def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, min_thick=3., min_space=3., border=10.):
+def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, min_thick=0.1, min_space=0.1, border=1.):
     """
     Reproduce an image with parallel bands.
 
@@ -25,11 +25,11 @@ def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, min_thick=3., 
     axis : int, optional
         1 for vertical bands, 0 for horizontal bands. (default : 1)
     min_thick : float, optional
-        Minimum thickness of a bright band. (default : 3.)
+        Minimum thickness of a bright band, in ratio of a band width. (default : 0.1)
     min_space : float, optional
-        Minimum space between bright bands. (default : 3.)
+        Minimum space between adjacent bright bands, in ratio of a band width. (default : 0.1)
     border : float, optional
-        Border size around the results, in px. (default : 10.)
+        Border size around the generated svg, in ratio of a band width. (default : 1.)
     """
 
     # Input as grayscale, and map to [0, 255].
@@ -47,6 +47,11 @@ def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, min_thick=3., 
     height_out = round(height_in * width_out / width_in)
     image = cv2.resize(image, (width_out, height_out), interpolation=cv2.INTER_LINEAR)
     scale_factor = width_out / width_in
+
+    # Convert in band_with unit to px.
+    min_thick *= band_width
+    min_space *= band_width
+    border *= band_width
 
     # Compute shadow bands widths, with means over pixel groups.
     values = image.reshape(height_out, n_bands, width_out // n_bands).mean(axis=2)
@@ -111,17 +116,17 @@ if __name__ == '__main__':
     parser.add_argument('--n-bands', type=int, default=32,
                         help='Number of shadow bands to use. (default : 32)')
     parser.add_argument('--axis', type=int, default=1,
-                        help='1 for vertical bands, 0 for horizontal bands (default : 1).')
-    parser.add_argument('--min-thick', type=float, default=3.,
-                        help='Minimum thickness of a bright band, in px. (default : 3.)')
-    parser.add_argument('--min-space', type=float, default=3.,
-                        help='Minimum space between bright bands, in px. (default : 3.)')
-    parser.add_argument('--border', type=float, default=10.,
-                        help='Border size around the result, in px. (default : 10.)')
+                        help='1 for vertical bands, 0 for horizontal bands. (default : 1)')
+    parser.add_argument('--min-thick', type=float, default=0.1,
+                        help='Minimum thickness of a bright band, in ratio of a band width. (default : 0.1)')
+    parser.add_argument('--min-space', type=float, default=0.1,
+                        help='Minimum space between adjacent bright bands, in ratio of a band width. (default : 0.1)')
+    parser.add_argument('--border', type=float, default=1.,
+                        help='Border size around the generated svg, in ratio of a band width. (default : 1.)')
     args = parser.parse_args()
 
     if args.file_out is None:
-        args.file_out = os.path.splitext(args.file_in)[0] + '.svg'
+        args.file_out = os.path.splitext(args.file_in)[0] + '_bands.svg'
     elif os.path.splitext(args.file_out)[-1] != '.svg':
         args.file_out += '.svg'
 
