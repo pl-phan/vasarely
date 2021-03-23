@@ -23,8 +23,9 @@ Input (any) | Output (SVG)
 
 ```
 usage: bands.py [-h] --file-in FILE_IN [--file-out FILE_OUT] [--invert]
-                [--n-bands N_BANDS] [--axis AXIS] [--min-thick MIN_THICK]
-                [--min-space MIN_SPACE] [--border BORDER]
+                [--n-bands N_BANDS] [--axis AXIS] [--resolution RESOLUTION]
+                [--min-thick MIN_THICK] [--min-space MIN_SPACE]
+                [--border BORDER]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -35,6 +36,8 @@ optional arguments:
   --n-bands N_BANDS     Number of shadow bands to use. (default : 32)
   --axis AXIS           1 for vertical bands, 0 for horizontal bands. (default
                         : 1)
+  --resolution RESOLUTION
+                        Resolution of each band. (default : 320)
   --min-thick MIN_THICK
                         Minimum thickness of a bright band, in ratio of a band
                         width. (default : 0.1)
@@ -42,7 +45,7 @@ optional arguments:
                         Minimum space between adjacent bright bands, in ratio
                         of a band width. (default : 0.1)
   --border BORDER       Border size around the generated svg, in ratio of a
-                        band width. (default : 1.)
+                        band width. Choose 0 for no border. (default : 1.)
 ```
 
 ### Tiles
@@ -71,18 +74,21 @@ optional arguments:
   --invert              Invert bright and dark values. (default : False)
   --n-tiles-h N_TILES_H
                         Number of tiles to use horizontally. (At least one of
-                        n-tiles-h and n-tiles-h must be provided)
+                        n-tiles-h and n-tiles-v must be provided)
   --n-tiles-v N_TILES_V
                         Number of tiles to use vertically. (At least one of
-                        n-tiles-h and n-tiles-h must be provided)
+                        n-tiles-h and n-tiles-v must be provided)
   --tile-type TILE_TYPE
-                        'squares' or 'circles'. (default : 'circles')
+                        'circles' or 'squares'. (default : 'circles')
   --min-thick MIN_THICK
                         Minimum thickness of the bright grid, in ratio of a
-                        tile size. (default : 0.1)
+                        tile size. (default : 0.1) For normal results : 'min-
+                        thick' in [0, 1], and 'min-thick' + 'min-tile-size' <
+                        1
   --min-tile-size MIN_TILE_SIZE
-                        Minimum size of the tiles, in ratio of a tile size.
-                        (default : 0.)
+                        Minimum size of a tile, in ratio of a tile size.
+                        (default : 0.) For normal results : 'min-tile-size' in
+                        [0, 1], and 'min-thick' + 'min-tile-size' < 1
   --border BORDER       Border size around the generated svg, in ratio of a
-                        tile size. (default : 1.)
+                        tile size. Choose 0 for no border. (default : 1.)
 ```

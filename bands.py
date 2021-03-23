@@ -33,7 +33,7 @@ def to_bands(file_in, file_out, invert=False,
     min_space : float, optional
         Minimum space between adjacent bright bands, in ratio of a band width. (default : 0.1)
     border : float, optional
-        Border size around the generated svg, in ratio of a tile size. Choose 0 for no border. (default : 1.)
+        Border size around the generated svg, in ratio of a band width. Choose 0 for no border. (default : 1.)
     """
 
     # Input as grayscale, and map to [0, 255].
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     parser.add_argument('--min-space', type=float, default=0.1,
                         help='Minimum space between adjacent bright bands, in ratio of a band width. (default : 0.1)')
     parser.add_argument('--border', type=float, default=1.,
-                        help='Border size around the generated svg, in ratio of a tile size. ' +
+                        help='Border size around the generated svg, in ratio of a band width. ' +
                              'Choose 0 for no border. (default : 1.)')
     args = parser.parse_args()
 
