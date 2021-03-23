@@ -29,7 +29,7 @@ def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, min_thick=0.1,
     min_space : float, optional
         Minimum space between adjacent bright bands, in ratio of a band width. (default : 0.1)
     border : float, optional
-        Border size around the generated svg, in ratio of a band width. (default : 1.)
+        Border size around the generated svg, in ratio of a tile size. Choose 0 for no border. (default : 1.)
     """
 
     # Input as grayscale, and map to [0, 255].
@@ -99,8 +99,9 @@ def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, min_thick=0.1,
         print("{} / {} bands".format(i, n_bands))
         # Draw i-est shadow shape
         dwg.add(dwg.polygon(points=shape, fill='#000000'))
-    # Draw frame
-    dwg.add(dwg.polygon(points=frame, stroke='#000000', fill='none'))
+    if border > 0.:
+        # Draw frame
+        dwg.add(dwg.polygon(points=frame, stroke='#000000', fill='none'))
     dwg.save(pretty=True)
     print('Output : {}'.format(file_out))
 
@@ -122,7 +123,8 @@ if __name__ == '__main__':
     parser.add_argument('--min-space', type=float, default=0.1,
                         help='Minimum space between adjacent bright bands, in ratio of a band width. (default : 0.1)')
     parser.add_argument('--border', type=float, default=1.,
-                        help='Border size around the generated svg, in ratio of a band width. (default : 1.)')
+                        help='Border size around the generated svg, in ratio of a tile size. ' +
+                             'Choose 0 for no border. (default : 1.)')
     args = parser.parse_args()
 
     if args.file_out is None:

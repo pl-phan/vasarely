@@ -32,7 +32,7 @@ def to_tiles(file_in, file_out, invert=False, n_tiles_horizontal=None, n_tiles_v
     min_tile_size : float, optional
         Minimum size of the tiles, in ratio of a tile size. (default : 0.)
     border : float, optional
-        Border size around the generated svg, in ratio of a tile size. (default : 1.)
+        Border size around the generated svg, in ratio of a tile size. Choose 0 for no border. (default : 1.)
     """
 
     # Input as grayscale, and map to [0, 255].
@@ -108,8 +108,9 @@ def to_tiles(file_in, file_out, invert=False, n_tiles_horizontal=None, n_tiles_v
         print("{} / {} tiles".format(k, n_tiles_horizontal * n_tiles_vertical))
         # Draw i-est shadow tile
         dwg.add(draw_func(tile[:2], tile[2:], fill='#000000'))
-    # Draw frame
-    dwg.add(dwg.polygon(points=frame, stroke='#000000', fill='none'))
+    if border > 0.:
+        # Draw frame
+        dwg.add(dwg.polygon(points=frame, stroke='#000000', fill='none'))
     dwg.save(pretty=True)
     print('Output : {}'.format(file_out))
 
@@ -135,7 +136,8 @@ if __name__ == '__main__':
     parser.add_argument('--min-tile-size', type=float, default=0.,
                         help='Minimum size of the tiles, in ratio of a tile size. (default : 0.)')
     parser.add_argument('--border', type=float, default=1.,
-                        help='Border size around the generated svg, in ratio of a tile size. (default : 1.)')
+                        help='Border size around the generated svg, in ratio of a tile size. ' +
+                             'Choose 0 for no border. (default : 1.)')
     args = parser.parse_args()
 
     if args.file_out is None:
