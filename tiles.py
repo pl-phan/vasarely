@@ -9,7 +9,7 @@ from utils import contrast, map_values
 
 
 def to_tiles(file_in, file_out, invert=False,
-             n_tiles_horizontal=None, n_tiles_vertical=None,
+             n_tiles_h=None, n_tiles_v=None,
              tile_type='circles', min_thick=0.1, min_tile_size=0., border=1.):
     """
     Reproduce an image with mosaic.
@@ -22,16 +22,20 @@ def to_tiles(file_in, file_out, invert=False,
         Path of the output SVG image.
     invert : bool, optional
         Invert bright and dark values. (default : False)
-    n_tiles_horizontal : int, optional
-        Number of tiles to use horizontally. (At least one of n-tiles-h and n-tiles-v must be provided)
-    n_tiles_vertical : int, optional
-        Number of tiles to use vertically. (At least one of n-tiles-h and n-tiles-v must be provided)
+    n_tiles_h : int, optional
+        Number of tiles to use horizontally.
+        (At least one of n_tiles_h and n_tiles_v must be provided)
+    n_tiles_v : int, optional
+        Number of tiles to use vertically.
+        (At least one of n_tiles_h and n_tiles_v must be provided)
     tile_type : str, optional
         'circles' or 'squares'. (default : 'circles')
     min_thick : float, optional
         Minimum thickness of the bright grid, in ratio of a tile size. (default : 0.1)
+        For normal results : min_thick in [0, 1], and min_thick + min_tile_size < 1
     min_tile_size : float, optional
         Minimum size of a tile, in ratio of a tile size. (default : 0.)
+        For normal results : min_tile_size in [0, 1], and min_thick + min_tile_size < 1
     border : float, optional
         Border size around the generated svg, in ratio of a tile size. Choose 0 for no border. (default : 1.)
     """
@@ -40,21 +44,21 @@ def to_tiles(file_in, file_out, invert=False,
     image = contrast(cv2.imread(file_in, 0), invert=invert)
     height_in, width_in = image.shape
 
-    if n_tiles_horizontal is None and n_tiles_vertical is None:
+    if n_tiles_h is None and n_tiles_v is None:
         raise AssertionError('Either n_tiles_horizontal or n_tiles_vertical must be specified.')
-    if n_tiles_vertical is None:
-        n_tiles_vertical = round(n_tiles_horizontal * height_in / width_in)
-    if n_tiles_horizontal is None:
-        n_tiles_horizontal = round(n_tiles_vertical * width_in / height_in)
+    if n_tiles_v is None:
+        n_tiles_v = round(n_tiles_h * height_in / width_in)
+    if n_tiles_h is None:
+        n_tiles_h = round(n_tiles_v * width_in / height_in)
 
     # Resize width to nearest multiple, for equally sized tiles.
-    tile_width = round(width_in / n_tiles_horizontal)
-    width_out = tile_width * n_tiles_horizontal
+    tile_width = round(width_in / n_tiles_h)
+    width_out = tile_width * n_tiles_h
     scale_factor_horizontal = width_out / width_in
 
     # Resize height to nearest multiple, for equally sized tiles.
-    tile_height = round(height_in / n_tiles_vertical)
-    height_out = tile_height * n_tiles_vertical
+    tile_height = round(height_in / n_tiles_v)
+    height_out = tile_height * n_tiles_v
     scale_factor_vertical = height_out / height_in
 
     image = cv2.resize(image, (width_out, height_out), interpolation=cv2.INTER_LINEAR)
@@ -66,16 +70,16 @@ def to_tiles(file_in, file_out, invert=False,
 
     # Compute tile sizes, with mean over each area.
     values = image.reshape(
-        n_tiles_vertical, height_out // n_tiles_vertical,
-        n_tiles_horizontal, width_out // n_tiles_horizontal
-    ).mean(axis=(1, -1)).reshape(n_tiles_horizontal * n_tiles_vertical)
+        n_tiles_v, height_out // n_tiles_v,
+        n_tiles_h, width_out // n_tiles_h
+    ).mean(axis=(1, -1)).reshape(n_tiles_h * n_tiles_v)
 
     # Array to be filled with the coordinates for the (X, Y, W, H) elements of each tile.
-    tiles = np.empty((n_tiles_vertical * n_tiles_horizontal, 4), dtype='float')
+    tiles = np.empty((n_tiles_v * n_tiles_h, 4), dtype='float')
 
     # Tile centers
-    tiles[:, 0] = ((np.arange(n_tiles_horizontal) + 0.5) * tile_width / scale_factor_horizontal)
-    tiles[:, 1] = ((np.arange(n_tiles_vertical) + 0.5) * tile_height / scale_factor_vertical)
+    tiles[:, 0] = np.tile(((np.arange(n_tiles_h) + 0.5) * tile_width / scale_factor_horizontal), n_tiles_v)
+    tiles[:, 1] = np.repeat(((np.arange(n_tiles_v) + 0.5) * tile_height / scale_factor_vertical), n_tiles_h)
 
     # Tile sizes
     tiles[:, 2] = map_values(values, 0., 255., tile_width / scale_factor_horizontal - min_thick, min_tile_size)
@@ -86,7 +90,7 @@ def to_tiles(file_in, file_out, invert=False,
         tiles[:, 2:] /= 2.
     elif tile_type.lower() in ['square', 'squares']:
         # X, Y must be upper-left corner
-        tiles[:, :2] -= tiles[:, :, 2:] / 2.
+        tiles[:, :2] -= tiles[:, 2:] / 2.
     else:
         raise NotImplementedError
 
@@ -126,19 +130,21 @@ if __name__ == '__main__':
     parser.add_argument('--invert', action='store_true',
                         help='Invert bright and dark values. (default : False)')
     parser.add_argument('--n-tiles-h', type=int, default=None,
-                        help='Number of tiles to use horizontally. ' +
+                        help='Number of tiles to use horizontally.\n' +
                              '(At least one of n-tiles-h and n-tiles-v must be provided)')
     parser.add_argument('--n-tiles-v', type=int, default=None,
-                        help='Number of tiles to use vertically. ' +
+                        help='Number of tiles to use vertically.\n' +
                              '(At least one of n-tiles-h and n-tiles-v must be provided)')
     parser.add_argument('--tile-type', type=str, default='circles',
                         help="'circles' or 'squares'. (default : 'circles')")
     parser.add_argument('--min-thick', type=float, default=0.1,
-                        help='Minimum thickness of the bright grid, in ratio of a tile size. (default : 0.1)')
+                        help='Minimum thickness of the bright grid, in ratio of a tile size. (default : 0.1)\n' +
+                             "For normal results : 'min-thick' in [0, 1], and 'min-thick' + 'min-tile-size' < 1")
     parser.add_argument('--min-tile-size', type=float, default=0.,
-                        help='Minimum size of a tile, in ratio of a tile size. (default : 0.)')
+                        help='Minimum size of a tile, in ratio of a tile size. (default : 0.)\n' +
+                             "For normal results : 'min-tile-size' in [0, 1], and 'min-thick' + 'min-tile-size' < 1")
     parser.add_argument('--border', type=float, default=1.,
-                        help='Border size around the generated svg, in ratio of a tile size. ' +
+                        help='Border size around the generated svg, in ratio of a tile size.\n' +
                              'Choose 0 for no border. (default : 1.)')
     args = parser.parse_args()
 
@@ -148,5 +154,5 @@ if __name__ == '__main__':
         args.file_out += '.svg'
 
     to_tiles(file_in=args.file_in, file_out=args.file_out, invert=args.invert,
-             n_tiles_horizontal=args.n_tiles_h, n_tiles_vertical=args.n_tiles_v, tile_type=args.tile_type,
+             n_tiles_h=args.n_tiles_h, n_tiles_v=args.n_tiles_v, tile_type=args.tile_type,
              min_thick=args.min_thick, min_tile_size=args.min_tile_size, border=args.border)

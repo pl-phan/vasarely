@@ -120,10 +120,10 @@ if __name__ == '__main__':
                         help='Invert bright and dark values. (default : False)')
     parser.add_argument('--n-bands', type=int, default=32,
                         help='Number of shadow bands to use. (default : 32)')
-    parser.add_argument('--resolution', type=int, default=320,
-                        help='Resolution of each band. (default : 320)')
     parser.add_argument('--axis', type=int, default=1,
                         help='1 for vertical bands, 0 for horizontal bands. (default : 1)')
+    parser.add_argument('--resolution', type=int, default=320,
+                        help='Resolution of each band. (default : 320)')
     parser.add_argument('--min-thick', type=float, default=0.1,
                         help='Minimum thickness of a bright band, in ratio of a band width. (default : 0.1)')
     parser.add_argument('--min-space', type=float, default=0.1,
