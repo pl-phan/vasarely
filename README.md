@@ -50,9 +50,9 @@ optional arguments:
 
 ### Tiles
 ```
-python tiles.py --file-in images/test1.png --n-tiles-h 100
-python tiles.py --file-in images/test2.png --n-tiles-v 50 
-python tiles.py --file-in images/test3.png --n-tiles-h 100 --tile-type square
+python tiles.py --file-in images/test1.png --n-tiles-h 50
+python tiles.py --file-in images/test2.png --n-tiles-v 25
+python tiles.py --file-in images/test3.png --n-tiles-h 50 --tile-type square
 ```
 Input (any) | Output (SVG)
 :---: | :---:
