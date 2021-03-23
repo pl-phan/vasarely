@@ -8,7 +8,8 @@ import svgwrite
 from utils import contrast, map_values
 
 
-def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, min_thick=0.1, min_space=0.1, border=1.):
+def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, resolution=320,
+             min_thick=0.1, min_space=0.1, border=1.):
     """
     Reproduce an image with parallel bands.
 
@@ -24,6 +25,8 @@ def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, min_thick=0.1,
         Number of shadow bands to use. (default : 32)
     axis : int, optional
         1 for vertical bands, 0 for horizontal bands. (default : 1)
+    resolution : int, optional
+        Resolution of each band. (default : 320)
     min_thick : float, optional
         Minimum thickness of a bright band, in ratio of a band width. (default : 0.1)
     min_space : float, optional
@@ -34,6 +37,7 @@ def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, min_thick=0.1,
 
     # Input as grayscale, and map to [0, 255].
     image = contrast(cv2.imread(file_in, 0), invert=invert)
+    print(image.shape)  # TODO Remove Debug
 
     # Transpose for horizontal bands.
     if axis == 0:
@@ -44,9 +48,12 @@ def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, min_thick=0.1,
     # Resize to nearest multiple, for equal sized bands.
     band_width = round(width_in / n_bands)
     width_out = band_width * n_bands
-    height_out = round(height_in * width_out / width_in)
+    # height_out = round(height_in * width_out / width_in)
+    height_out = resolution
     image = cv2.resize(image, (width_out, height_out), interpolation=cv2.INTER_LINEAR)
-    scale_factor = width_out / width_in
+    scale_factor_horizontal = width_out / width_in
+    scale_factor_vertical = height_out / height_in
+    print(image.shape)  # TODO Remove Debug
 
     # Convert in band_with unit to px.
     min_thick *= band_width
@@ -60,7 +67,7 @@ def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, min_thick=0.1,
     # Array will be filled with the coordinates for the
     # 'height_out * 2' points of each shadow shape contour.
 
-    heights = np.arange(height_out) / scale_factor
+    heights = np.arange(height_out) / scale_factor_vertical
     for k in range(n_bands):
         # value == 0. means largest shadow band,
         # value == 255. means thinnest shadow band.
@@ -68,16 +75,16 @@ def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, min_thick=0.1,
         # Points on the left, going down.
         shapes[k, :height_out, 0] = map_values(
             values[:, k], 0., 255.,
-            k * band_width / scale_factor + min_thick / 2.,
-            (k + 0.5) * band_width / scale_factor - min_space / 2.,
+            k * band_width / scale_factor_horizontal + min_thick / 2.,
+            (k + 0.5) * band_width / scale_factor_horizontal - min_space / 2.,
         )
         shapes[k, :height_out, 1] = heights
 
         # Points on the right, going up.
         shapes[k, height_out:, 0] = np.flipud(map_values(
             values[:, k], 255., 0.,
-            (k + 0.5) * band_width / scale_factor + min_space / 2.,
-            (k + 1) * band_width / scale_factor - min_thick / 2.,
+            (k + 0.5) * band_width / scale_factor_horizontal + min_space / 2.,
+            (k + 1) * band_width / scale_factor_horizontal - min_thick / 2.,
         ))
         shapes[k, height_out:, 1] = np.flipud(heights)
 
@@ -94,9 +101,10 @@ def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, min_thick=0.1,
         shapes = np.flip(shapes, axis=-1)
         frame = np.flip(frame, axis=-1)
 
+    print("Shape sizes : {}".format(shapes[0].shape))  # TODO Remove Debug
     dwg = svgwrite.Drawing(file_out, profile='basic')
     for i, shape in enumerate(shapes, 1):
-        print("{} / {} bands".format(i, n_bands))
+        # print("{} / {} bands".format(i, n_bands))
         # Draw i-est shadow shape
         dwg.add(dwg.polygon(points=shape, fill='#000000'))
     if border > 0.:
@@ -116,6 +124,8 @@ if __name__ == '__main__':
                         help='Invert bright and dark values. (default : False)')
     parser.add_argument('--n-bands', type=int, default=32,
                         help='Number of shadow bands to use. (default : 32)')
+    parser.add_argument('--resolution', type=int, default=320,
+                        help='Resolution of each band. (default : 320)')
     parser.add_argument('--axis', type=int, default=1,
                         help='1 for vertical bands, 0 for horizontal bands. (default : 1)')
     parser.add_argument('--min-thick', type=float, default=0.1,
@@ -133,5 +143,5 @@ if __name__ == '__main__':
         args.file_out += '.svg'
 
     to_bands(file_in=args.file_in, file_out=args.file_out, invert=args.invert,
-             n_bands=args.n_bands, axis=args.axis,
+             n_bands=args.n_bands, axis=args.axis, resolution=args.resolution,
              min_thick=args.min_thick, min_space=args.min_space, border=args.border)
