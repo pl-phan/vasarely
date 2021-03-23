@@ -8,7 +8,8 @@ import svgwrite
 from utils import contrast, map_values
 
 
-def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, resolution=320,
+def to_bands(file_in, file_out, invert=False,
+             n_bands=32, axis=1, resolution=320,
              min_thick=0.1, min_space=0.1, border=1.):
     """
     Reproduce an image with parallel bands.
@@ -37,7 +38,6 @@ def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, resolution=320
 
     # Input as grayscale, and map to [0, 255].
     image = contrast(cv2.imread(file_in, 0), invert=invert)
-    print(image.shape)  # TODO Remove Debug
 
     # Transpose for horizontal bands.
     if axis == 0:
@@ -45,39 +45,37 @@ def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, resolution=320
 
     height_in, width_in = image.shape
 
-    # Resize to nearest multiple, for equal sized bands.
+    # Resize width to nearest multiple, for equally sized bands.
     band_width = round(width_in / n_bands)
     width_out = band_width * n_bands
-    # height_out = round(height_in * width_out / width_in)
-    height_out = resolution
-    image = cv2.resize(image, (width_out, height_out), interpolation=cv2.INTER_LINEAR)
     scale_factor_horizontal = width_out / width_in
-    scale_factor_vertical = height_out / height_in
-    print(image.shape)  # TODO Remove Debug
 
-    # Convert in band_with unit to px.
+    # Resize height to desired resolution.
+    height_out = resolution
+    scale_factor_vertical = height_out / height_in
+
+    image = cv2.resize(image, (width_out, height_out), interpolation=cv2.INTER_LINEAR)
+
+    # Convert from band_with unit to px.
     min_thick *= band_width
     min_space *= band_width
     border *= band_width
 
     # Compute shadow bands widths, with means over pixel groups.
-    values = image.reshape(height_out, n_bands, width_out // n_bands).mean(axis=2)
+    values = image.reshape(height_out, n_bands, width_out // n_bands).mean(axis=-1)
 
+    # Array to be filled with the coordinates for the 'height_out * 2' points of each shadow shape contour.
     shapes = np.empty((n_bands, 2 * height_out, 2), dtype='float')
-    # Array will be filled with the coordinates for the
-    # 'height_out * 2' points of each shadow shape contour.
-
     heights = np.arange(height_out) / scale_factor_vertical
     for k in range(n_bands):
-        # value == 0. means largest shadow band,
-        # value == 255. means thinnest shadow band.
+        # value == 0. means largest shadow band, value == 255. means thinnest shadow band.
 
         # Points on the left, going down.
         shapes[k, :height_out, 0] = map_values(
             values[:, k], 0., 255.,
             k * band_width / scale_factor_horizontal + min_thick / 2.,
             (k + 0.5) * band_width / scale_factor_horizontal - min_space / 2.,
-        )
+            )
         shapes[k, :height_out, 1] = heights
 
         # Points on the right, going up.
@@ -85,7 +83,7 @@ def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, resolution=320
             values[:, k], 255., 0.,
             (k + 0.5) * band_width / scale_factor_horizontal + min_space / 2.,
             (k + 1) * band_width / scale_factor_horizontal - min_thick / 2.,
-        ))
+            ))
         shapes[k, height_out:, 1] = np.flipud(heights)
 
     # Offset both x and y, so the whole array
@@ -101,11 +99,9 @@ def to_bands(file_in, file_out, invert=False, n_bands=32, axis=1, resolution=320
         shapes = np.flip(shapes, axis=-1)
         frame = np.flip(frame, axis=-1)
 
-    print("Shape sizes : {}".format(shapes[0].shape))  # TODO Remove Debug
     dwg = svgwrite.Drawing(file_out, profile='basic')
-    for i, shape in enumerate(shapes, 1):
-        # print("{} / {} bands".format(i, n_bands))
-        # Draw i-est shadow shape
+    # Draw
+    for shape in shapes:
         dwg.add(dwg.polygon(points=shape, fill='#000000'))
     if border > 0.:
         # Draw frame
