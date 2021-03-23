@@ -38,64 +38,47 @@ def to_bands(file_in, file_out, invert=False,
 
     # Input as grayscale, and map to [0, 255].
     image = contrast(cv2.imread(file_in, 0), invert=invert)
-
-    # Transpose for horizontal bands.
     if axis == 0:
+        # Transpose for horizontal bands.
         image = image.T
-
     height_in, width_in = image.shape
+    band_width = width_in / n_bands
 
     # Resize width to nearest multiple, for equally sized bands.
-    band_width = round(width_in / n_bands)
-    width_out = band_width * n_bands
-    scale_factor_horizontal = width_out / width_in
-
-    # Resize height to desired resolution.
-    height_out = resolution
-    scale_factor_vertical = height_out / height_in
-
-    image = cv2.resize(image, (width_out, height_out), interpolation=cv2.INTER_LINEAR)
-
-    # Convert from band_with unit to px.
-    min_thick *= band_width
-    min_space *= band_width
-    border *= band_width
+    width_out = round(band_width) * n_bands
+    image = cv2.resize(image, (width_out, resolution), interpolation=cv2.INTER_LINEAR)
 
     # Compute shadow bands widths, with means over pixel groups.
-    values = image.reshape(height_out, n_bands, width_out // n_bands).mean(axis=-1)
+    values = image.reshape(resolution, n_bands, width_out // n_bands).mean(axis=-1)
 
-    # Array to be filled with the coordinates for the 'height_out * 2' points of each shadow shape contour.
-    shapes = np.empty((n_bands, 2 * height_out, 2), dtype='float')
-    heights = np.arange(height_out) / scale_factor_vertical
-    for k in range(n_bands):
-        # value == 0. means largest shadow band, value == 255. means thinnest shadow band.
+    # Array to be filled with the coordinates [X, Y] for the 'resolution * 2' points of each shadow shape contour.
+    # value == 0. means largest shadow band, value == 255. means thinnest shadow band.
+    shapes = np.empty((n_bands, 2, resolution, 2), dtype='float')
+    # Point coordinates on parallel lines.
+    shapes[:, :, :, 0] = 0.5 + np.arange(n_bands)[:, np.newaxis, np.newaxis]
+    shapes[:, :, :, 1] = np.arange(resolution) / resolution
+    # Deform shapes according to image values.
+    sizes = map_values(values, 0., 255., 1. - min_thick, min_space).T
+    shapes[:, 0, :, 0] -= sizes / 2.
+    shapes[:, 1, :, 0] += sizes / 2.
+    # Flip last half of values upside down, to outline the shape with ordered points.
+    shapes[:, 1] = np.flip(shapes[:, 1], axis=1)
 
-        # Points on the left, going down.
-        shapes[k, :height_out, 0] = map_values(
-            values[:, k], 0., 255.,
-            k * band_width / scale_factor_horizontal + min_thick / 2.,
-            (k + 0.5) * band_width / scale_factor_horizontal - min_space / 2.,
-            )
-        shapes[k, :height_out, 1] = heights
+    # Merge to an array of shapes
+    shapes = shapes.reshape(n_bands, 2 * resolution, 2)
 
-        # Points on the right, going up.
-        shapes[k, height_out:, 0] = np.flipud(map_values(
-            values[:, k], 255., 0.,
-            (k + 0.5) * band_width / scale_factor_horizontal + min_space / 2.,
-            (k + 1) * band_width / scale_factor_horizontal - min_thick / 2.,
-            ))
-        shapes[k, height_out:, 1] = np.flipud(heights)
+    # Upscale to original dimensions
+    shapes *= band_width, height_in
 
-    # Offset both x and y, so the whole array
+    # Frame
+    border *= band_width
     shapes += border
-
-    # Frames corners
     frame = np.zeros((4, 2), dtype='float')
-    frame[1:3, 1] = height_in + 2. * border
     frame[2:4, 0] = width_in + 2. * border
+    frame[1:3, 1] = height_in + 2. * border
 
-    # Transpose for horizontal bands
     if axis == 0:
+        # Transpose for horizontal bands
         shapes = np.flip(shapes, axis=-1)
         frame = np.flip(frame, axis=-1)
 

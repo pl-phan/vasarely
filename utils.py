@@ -17,6 +17,7 @@ def contrast(image, invert=False):
     contrasted_image : ndarray
         Contrasted array with min=0, max=255 [uint8].
     """
+
     image = image.astype('float')
     if invert:
         image *= -1
@@ -47,6 +48,6 @@ def map_values(x, in_min, in_max, out_min, out_max):
     mapped_array : ndarray
         Re-mapped array.
     """
+
     slope = (out_max - out_min) / (in_max - in_min)
-    offset = out_max - slope * in_max
-    return slope * x + offset
+    return slope * (x - in_min) + out_min

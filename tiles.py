@@ -45,62 +45,53 @@ def to_tiles(file_in, file_out, invert=False,
     height_in, width_in = image.shape
 
     if n_tiles_h is None and n_tiles_v is None:
-        raise AssertionError('Either n_tiles_horizontal or n_tiles_vertical must be specified.')
+        raise AssertionError('Either n_tiles_h or n_tiles_v must be specified.')
     if n_tiles_v is None:
         n_tiles_v = round(n_tiles_h * height_in / width_in)
     if n_tiles_h is None:
         n_tiles_h = round(n_tiles_v * width_in / height_in)
 
-    # Resize width to nearest multiple, for equally sized tiles.
-    tile_width = round(width_in / n_tiles_h)
-    width_out = tile_width * n_tiles_h
-    scale_factor_horizontal = width_out / width_in
+    tile_width = width_in / n_tiles_h
+    tile_height = height_in / n_tiles_v
 
-    # Resize height to nearest multiple, for equally sized tiles.
-    tile_height = round(height_in / n_tiles_v)
-    height_out = tile_height * n_tiles_v
-    scale_factor_vertical = height_out / height_in
-
+    # Resize to nearest multiple, for equally sized tiles.
+    width_out = round(tile_width) * n_tiles_h
+    height_out = round(tile_height) * n_tiles_v
     image = cv2.resize(image, (width_out, height_out), interpolation=cv2.INTER_LINEAR)
 
-    # Convert from tile_size unit to px.
-    min_thick *= 0.5 * (tile_width + tile_height)
-    min_tile_size *= 0.5 * (tile_width + tile_height)
-    border *= 0.5 * (tile_width + tile_height)
+    # Compute tile sizes, averaging over each area.
+    values = image.reshape(n_tiles_v, height_out // n_tiles_v, n_tiles_h, width_out // n_tiles_h).mean(axis=(1, -1))
 
-    # Compute tile sizes, with mean over each area.
-    values = image.reshape(
-        n_tiles_v, height_out // n_tiles_v,
-        n_tiles_h, width_out // n_tiles_h
-    ).mean(axis=(1, -1)).reshape(n_tiles_h * n_tiles_v)
-
-    # Array to be filled with the coordinates for the (X, Y, W, H) elements of each tile.
-    tiles = np.empty((n_tiles_v * n_tiles_h, 4), dtype='float')
-
+    # Array to be filled with the [[X, Y], [W, H]] elements of each tile.
+    # value == 0. means largest tile, value == 255. means smallest tile.
+    tiles = np.empty((n_tiles_v, n_tiles_h, 2, 2), dtype='float')
     # Tile centers
-    tiles[:, 0] = np.tile(((np.arange(n_tiles_h) + 0.5) * tile_width / scale_factor_horizontal), n_tiles_v)
-    tiles[:, 1] = np.repeat(((np.arange(n_tiles_v) + 0.5) * tile_height / scale_factor_vertical), n_tiles_h)
-
+    tiles[:, :, 0, 0] = 0.5 + np.arange(n_tiles_h)
+    tiles[:, :, 0, 1] = 0.5 + np.arange(n_tiles_v)[:, np.newaxis]
+    # Merge to an array of tiles
+    tiles = tiles.reshape(n_tiles_v * n_tiles_h, 2, 2)
     # Tile sizes
-    tiles[:, 2] = map_values(values, 0., 255., tile_width / scale_factor_horizontal - min_thick, min_tile_size)
-    tiles[:, 3] = map_values(values, 0., 255., tile_height / scale_factor_vertical - min_thick, min_tile_size)
+    tiles[:, 1] = map_values(values, 0., 255., 1. - min_thick, min_tile_size).reshape(n_tiles_v * n_tiles_h, 1)
 
     if tile_type.lower() in ['circle', 'circles']:
-        # Radius is half th size
-        tiles[:, 2:] /= 2.
+        # Radius is half the size
+        tiles[:, 1] /= 2.
     elif tile_type.lower() in ['square', 'squares']:
         # X, Y must be upper-left corner
-        tiles[:, :2] -= tiles[:, 2:] / 2.
+        tiles[:, 0] -= tiles[:, 1] / 2.
     else:
         raise NotImplementedError
 
-    # Offset both x and y
-    tiles[:, :2] += border
+    # Upscale to original dimensions
+    tiles *= tile_width, tile_height
 
-    # Frames corners
+    # Frame
+    border_h = border * tile_width
+    border_v = border * tile_height
+    tiles[:, 0] += border_h, border_v
     frame = np.zeros((4, 2), dtype='float')
-    frame[1:3, 1] = height_in + 2. * border
-    frame[2:4, 0] = width_in + 2. * border
+    frame[1:3, 1] = height_in + 2. * border_v
+    frame[2:4, 0] = width_in + 2. * border_h
 
     dwg = svgwrite.Drawing(file_out, profile='basic')
 
@@ -113,7 +104,7 @@ def to_tiles(file_in, file_out, invert=False,
 
     # Draw
     for tile in tiles:
-        dwg.add(draw_func(tile[:2], tile[2:], fill='#000000'))
+        dwg.add(draw_func(tile[0], tile[1], fill='#000000'))
     if border > 0.:
         # Draw frame
         dwg.add(dwg.polygon(points=frame, stroke='#000000', fill='none'))
