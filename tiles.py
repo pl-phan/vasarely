@@ -55,8 +55,8 @@ def to_tiles(file_in, file_out, invert=False,
     tile_height = height_in / n_tiles_v
 
     # Resize to nearest multiple, for equally sized tiles.
-    width_out = round(tile_width) * n_tiles_h
-    height_out = round(tile_height) * n_tiles_v
+    width_out = max(round(tile_width), 1) * n_tiles_h
+    height_out = max(round(tile_height), 1) * n_tiles_v
     image = cv2.resize(image, (width_out, height_out), interpolation=cv2.INTER_LINEAR)
 
     # Compute tile sizes, averaging over each area.
@@ -103,7 +103,8 @@ def to_tiles(file_in, file_out, invert=False,
         raise NotImplementedError
 
     # Draw
-    for tile in tiles:
+    for i, tile in enumerate(tiles, 1):
+        print("{} / {} tiles".format(i, n_tiles_v * n_tiles_h))
         if tile[1].min() == 0.:
             continue
         dwg.add(draw_func(tile[0], tile[1], fill='#000000'))

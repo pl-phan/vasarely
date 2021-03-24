@@ -45,7 +45,7 @@ def to_bands(file_in, file_out, invert=False,
     band_width = width_in / n_bands
 
     # Resize width to nearest multiple, for equally sized bands.
-    width_out = round(band_width) * n_bands
+    width_out = max(round(band_width), 1) * n_bands
     image = cv2.resize(image, (width_out, resolution), interpolation=cv2.INTER_LINEAR)
 
     # Compute shadow bands widths, with means over pixel groups.
@@ -84,7 +84,8 @@ def to_bands(file_in, file_out, invert=False,
 
     dwg = svgwrite.Drawing(file_out, profile='basic')
     # Draw
-    for shape in shapes:
+    for i, shape in enumerate(shapes, 1):
+        print("{} / {} bands".format(i, n_bands))
         dwg.add(dwg.polygon(points=shape, fill='#000000'))
     if border > 0.:
         # Draw frame
