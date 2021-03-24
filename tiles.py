@@ -104,6 +104,9 @@ def to_tiles(file_in, file_out, invert=False,
 
     # Draw
     for tile in tiles:
+        if tile[1].min() == 0.:
+            continue
+        print(tile[1])
         dwg.add(draw_func(tile[0], tile[1], fill='#000000'))
     if border > 0.:
         # Draw frame
